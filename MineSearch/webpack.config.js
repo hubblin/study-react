@@ -24,7 +24,7 @@ module.exports={
         path: path.join(__dirname, "dist"),
         filename: "app.js",
         clean: true,
-        publicPath: "./dist"
+        publicPath: "/dist"
     },
     devServer: {
         static: {
