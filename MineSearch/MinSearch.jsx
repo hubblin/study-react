@@ -1,4 +1,4 @@
-import React, {useReducer, createContext, useMemo} from 'react';
+import React, {useReducer, createContext, useMemo, useEffect} from 'react';
 
 import Table from './Table';
 
@@ -26,12 +26,19 @@ export const CLICK_MINE = 'CLICK_MINE';
 export const FLAG_CELL = 'FLAG_CELL';
 export const QUESTION_CELL = 'QUESTION_CELL';
 export const NORMALIZE_CELL = 'NORMALIZE_CELL';
+export const INCREMENT_TIMER = 'INCREMENT_TIMER';
 
 const initialState = {
     tableData : [],
+    data: {
+        row: 0,
+        cell: 0,
+        mine: 0
+    },
     timer: 0,
     result: '',
-    halted: false
+    halted: true,
+    opendCount : 0
 };
 
 const plantMine = (row, cell, mine) => {
@@ -68,14 +75,19 @@ const reducer = (state, action) => {
         case START_GAME:
             return {
                 ...state,
-                tableData: plantMine(action.row, action.cell, action.mine)
+                data: {row:action.row, cell:action.cell, mine:action.mine},
+                tableData: plantMine(action.row, action.cell, action.mine),
+                halted : false,
+                opendCount: 0,
+                timer: 0
             };
         case OPEN_CELL:{
             const tableData = [...state.tableData];
             tableData.forEach((row, i) => {
                 tableData[i] = [...row]
             });
-            const checked = [];
+            const checked = []; 
+            let openedCount = 0;
             const checkAtrround = (row, cell) => {
                 if([CODE.OPENED, CODE.FLAG_MINE, CODE.FLAG, CODE.QUESTION_MINE, CODE.QUESTION].includes(tableData[row][cell])){
                     return;
@@ -88,6 +100,7 @@ const reducer = (state, action) => {
                 }else{
                     checked.push(row + ',' + cell);
                 }
+                
                 let around = [];
                 if(tableData[row -1]){
                     around = around.concat( 
@@ -124,7 +137,6 @@ const reducer = (state, action) => {
                             near.push([row +1,cell]);
                             near.push([row + 1,cell +1]);
                         }
-                        console.log(near);
                         near.forEach((n) => {
                             if(tableData[n[0]][n[1]] !== CODE.OPENED){
                                 checkAtrround(n[0], n[1]);
@@ -132,12 +144,27 @@ const reducer = (state, action) => {
                         })
                     }
                 }
+                if(tableData[row][cell] === CODE.NORMAL){ // 내 칸이 닫힌 칸이면 +1
+                    openedCount += 1;
+                }
             }
+
             // tableData[action.row][action.cell] = CODE.OPENED;
             checkAtrround(action.row, action.cell);
+            let halted = false;
+            let result = '';
+            if(state.data.row * state.data.cell - state.data.mine === state.opendCount + openedCount) {
+                //승리
+                halted = true;
+                result = '승리하셨습니다.';
+            }
+            
             return{
                 ...state,
-                tableData
+                tableData,
+                opendCount: state.opendCount + openedCount,
+                halted,
+                result
             };
         }
         case CLICK_MINE:{
@@ -192,6 +219,12 @@ const reducer = (state, action) => {
                 tableData,
             }
         }
+        case INCREMENT_TIMER: {
+            return{
+                ...state,
+                timer: state.timer + 1
+            }
+        }
         default:
             return state;
     }
@@ -201,7 +234,20 @@ const MinSearch = () => {
     const [state, dispatch] = useReducer(reducer, initialState);
 
     //캐싱을 해줘야 성능저하가 일어나지 않는다.
-    const value = useMemo(() => ({tableData: state.tableData, halted: state.halted,dispatch}),[state.tableData, state.halted])
+    const value = useMemo(() => ({tableData: state.tableData, halted: state.halted,dispatch}),[state.tableData, state.halted]);
+
+    useEffect(() => {
+        let timer;
+        if(state.halted === false){
+            timer = setInterval(() => {
+                dispatch({type: INCREMENT_TIMER});
+            }, 1000)
+        }
+
+        return() => {
+            clearInterval(timer)
+        }
+    },[state.halted]);
 
     return (
         <TableContext.Provider value={value}>
