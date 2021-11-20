@@ -1,9 +1,14 @@
 import PropTypes from 'prop-types';
 import Link from 'next/link';
-import {Menu} from 'antd';
+import {Input, Menu, Row, Col} from 'antd';
+import React, {useState} from 'react';
+//반응형을 디자인 할때는 모바일 먼저 하고 점점 키워야한다.
 
+import UserProfile from '../components/UserProfile';
+import LoginForm from '../components/LoginForm';
 
 const AppLayout = ({children}) => {
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     return (
     <div>
         <Menu mode="horizontal">
@@ -14,11 +19,23 @@ const AppLayout = ({children}) => {
                 <Link href="/profile"><a>프로필</a></Link>
             </Menu.Item>
             <Menu.Item>
+                <Input.Search enterButton style={{verticalAlign: 'middle'}}/>
+            </Menu.Item>
+            <Menu.Item>
                 <Link href="/signup"><a>회원가입</a></Link>
             </Menu.Item>
-            
         </Menu>
-        {children}
+        <Row gutter={8}>
+            <Col xs={24} md={6}>
+                {isLoggedIn ? <UserProfile/> : <LoginForm/>}
+            </Col>
+            <Col xs={24} md={12}>
+                {children}
+            </Col>
+            <Col xs={24} md={6}>
+                <a href="https://google.com" target="_blank" rel="noreferrrer noopper"></a>
+            </Col>
+        </Row>
     </div>
     )
 };
