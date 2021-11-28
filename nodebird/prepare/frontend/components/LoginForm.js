@@ -1,25 +1,28 @@
 import React from 'react';
 import {Button, Form, Input} from 'antd';
-import {useState, useCallback} from 'react';
+import {useCallback} from 'react';
 import Link from 'next/link';
 import styled from 'styled-components';
-
+import useinput from '../hooks/useinput';
+import { useDispatch } from 'react-redux';
+import { loginAction } from '../reducers/user';
 const ButtonWrapper = styled.div`
     margin-top : 10px;
 `
 
 const LoginForm = () => {
-    const [id, setId] = useState('');
-    const [password, setPassword] = useState('');
-    const onChangeId = useCallback((e) => {
-        setId(e.target.value)
-    },[])
+    const dispatch = useDispatch();
+    const [id, onChangeId] = useinput('');
+    const [password, onChangePassword] = useinput('');
 
-    const onChangePassword = useCallback((e) => {
-        setPassword(e.target.value)
-    },[])
+    const onSubmitForm = useCallback(() => {
+        console.log(id, password);
+        dispatch(loginAction({id, password}));
+    },[id, password])
+
+
     return(
-        <Form>
+        <Form onFinish={onSubmitForm}>
             <div>
                 <label htmlFor="user-id">아이디</label>
                 <br/>
@@ -43,5 +46,6 @@ const LoginForm = () => {
         </Form>
     );
 }
+
 
 export default LoginForm;
